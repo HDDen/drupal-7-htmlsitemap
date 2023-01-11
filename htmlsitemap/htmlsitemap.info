@@ -1,0 +1,7 @@
+name = HTML Sitemap
+description = Creates token [custom:htmlsitemap], which shows html of site's structure
+package = Custom
+core = 7.x
+
+version = "7.x-1.0"
+core = "7.x"

@@ -1,0 +1,298 @@
+<?php
+function htmlsitemap_log($logdata = ''){
+
+    $logdata = var_export($logdata,true);
+    $logfile = rtrim($_SERVER['DOCUMENT_ROOT'], '/') . '/sites/all/modules/htmlsitemap/log.txt';
+    //$logfile = 'log.txt';
+    date_default_timezone_set( 'Europe/Moscow' );
+    $date = date('d/m/Y H:i:s', time());
+    file_put_contents($logfile, $date.': '.$logdata.PHP_EOL, FILE_APPEND | LOCK_EX);
+}
+
+/**
+ * Implements hook_token_info().
+ * Добавляет токен
+ */
+function htmlsitemap_token_info(){
+
+    // Add tokens.
+    $tokens['htmlsitemap'] = array(
+        'name' => t('HTML Sitemap'),
+        'description' => t('HTML with all structure'),
+    );
+
+    return array(
+        'tokens' => array(
+            'custom' => $tokens,
+        ),
+    );
+}
+
+/**
+ * Implements hook_tokens().
+ * Заполняет токен значением
+ */
+function htmlsitemap_tokens($type, $tokens, array $data = array(), array $options = array()){
+    $replacements = array();
+
+    if ($type == 'custom') {
+        foreach ($tokens as $name => $original) {
+            switch ($name) {
+                case 'htmlsitemap':
+                    $replacements[$original] = htmlsitemap_get_markup(); // результат выполнения функции
+                    break;
+            }
+        }
+    }
+
+    // Return the replacements.
+    return $replacements;
+}
+
+/**
+ * Основная ф-я для предоставления содержимого токена
+ */
+function htmlsitemap_get_markup(){
+    // Должны собрать все типы нод, затем сделать блеклист, затем по каждому типу нод получить все ноды и поместить в массив. После - термины таксономии (может, тоже фильтр) и представления.
+    // Затем отсортировать массив по url, и построить список
+    
+    // результирующий html
+    $result = '';
+
+    // пробуем получить кэш
+    $domain = strtok($_SERVER['HTTP_HOST'], ':');
+    $cached = cache_get('htmlsitemap_'.$domain);
+
+    if (!$cached){
+        // получим все ноды, передаём чёрный список
+        $nodes = htmlsitemap_get_nodes(array(
+            'action', 'review', 'slide', 'webform',
+        ));
+
+        // получим все термины, можно передать чёрный список
+        $terms = htmlsitemap_get_terms(array());
+
+        // получим все представления
+        // ВНИМАНИЕ! Обработчик опирается в том числе на белый лист, т.к. может быть много встроенных представлений, которые перечислять избыточно
+        $views = htmlsitemap_get_views(array(
+            // исключаемые словари
+            "term_null", "search", "taxonomy_term"
+        ), array(
+            // белый лист
+            //'actions'
+        ));
+
+        // объединяем и сортируем полученное
+        $all_elements = array_merge($nodes, $terms, $views);
+        ksort($all_elements);
+
+        // есть массив ссылок, теперь надо отрендерить
+        $result = htmlsitemap_render_html($all_elements);
+
+        // поместим в кэш
+        cache_set('htmlsitemap_'.$domain, $result, 'cache', CACHE_TEMPORARY);
+    } else {
+        $result = $cached->data;
+    }
+
+    return $result;
+}
+
+/**
+ * Получаем url всех nodes сайта, с фильтром по типам
+ */
+function htmlsitemap_get_nodes($node_blacklist = array()){
+    $elements = array(); // сюда поместим элементы, являющиеся страницами
+
+    // получим все существующие типы нод
+    $node_types = node_type_get_types();
+
+    // обрабатываем каждый тип
+    foreach ($node_types as $type => $type_props) {
+
+        // скипаем тип, если в блэклисте
+        if (in_array($type, $node_blacklist)) continue;
+
+        // грузим ноды этого типа
+        $nodes = node_load_multiple(array(), array('type' => $type, 'status' => 1));
+
+        // запросим url каждой ноды
+        if ($nodes){
+            foreach ($nodes as $node_id => $node_data){
+                $url = url('node/' . $node_id, array('absolute' => TRUE) );
+                $elements[$url] = $node_data->title;
+            }
+        }
+    }
+
+    return $elements;
+}
+
+/**
+ * Получаем url всех терминов, с фильтром по словарям
+ */
+function htmlsitemap_get_terms($vocab_blacklist){
+    $elements = array(); // сюда поместим элементы, являющиеся страницами
+
+    // получим все словари
+    $vocabs = taxonomy_get_vocabularies();
+
+    // запрашиваем термы каждого из них
+    if ($vocabs){
+        foreach ($vocabs as $v_id => $v_props) {
+            // фильтр по имени словаря
+            if (in_array($v_props->machine_name, $vocab_blacklist)) continue;
+
+            // грузим термины
+            $terms = entity_load('taxonomy_term', FALSE, array('vid' => $v_id));
+
+            // обходим термины
+            if ($terms){
+                foreach ($terms as $term_id => $term_props) {
+                    
+                    // провверяем наличие статуса
+                    if (isset($term_props->status) && $term_props->status){
+                        $url = url('taxonomy/term/' . $term_id, array('absolute' => TRUE) );
+                        $elements[$url] = $term_props->name;
+                    }
+                }
+            }
+        }
+    }
+
+    return $elements;
+}
+
+/**
+ * Получаем url всех представлений, имеющих отображение Page, с фильтрами по исключениям/белому списку
+ */
+function htmlsitemap_get_views($views_blacklist = array(), $views_whitelist = array()){
+    $elements = array(); // сюда поместим элементы, являющиеся страницами
+
+    // грузим все вьюхи
+    $views = views_get_all_views();
+
+    if ($views){
+        foreach ($views as $view_machineName => $view_data) {
+            
+            // блэклист
+            if (in_array($view_machineName, $views_blacklist)) continue;
+
+            // вайтлист
+            if ($views_whitelist && !in_array($view_machineName, $views_whitelist)) continue;
+
+            // перебор вьюсов
+            if ($view_data->disabled) continue; // представление отключено
+
+            if (isset($view_data->display["page"]) && isset($view_data->display["page"]->display_options["path"])){
+                $url = url($view_data->display["page"]->display_options["path"], array('absolute' => TRUE) );
+                $elements[$url] = $view_data->human_name;
+            }
+        }
+    }
+
+    return $elements;
+}
+
+/**
+ * Получим список ссылок, возвращаем итоговую разметку
+ */
+function htmlsitemap_render_html($elements, $blacklist = array()){
+    $result = '';
+
+    // из списка ссылок получаем рендерируемый массив
+    $renderable_array = htmlsitemap_get_renderable_array($elements, $blacklist);
+
+    // Вторая часть. Из полученного массива рендерим разметку.
+    $result = htmlsitemap_build_html_from_array($renderable_array);
+
+    return $result;
+}
+
+/**
+ * Получаем список ссылок, раскладываем его на массив ['url' => title, url, childs => [...], 'url' => ... ]
+ */
+function htmlsitemap_get_renderable_array($elements, $blacklist = array()){
+    
+    if ($elements){
+        // есть массив формата 'https://site.com/test' => 'Тестовая'
+        // преобразовываем в массив
+        $render_array = array();
+        
+        foreach ($elements as $url => $title) {
+            // проверка на блеклист
+            if ($blacklist && in_array($url, $blacklist)) continue;
+
+            // удаляем домен
+            $domain = strtok($_SERVER['HTTP_HOST'], ':');
+            $temp_url = array_reverse(explode($domain, $url))[0];
+
+            // имеем элемент '/test/test2/test3', разбиваем и строим массив
+            $temp_url = trim($temp_url, '/');
+            $temp_url = explode('/', $temp_url);
+            if ($temp_url){
+
+                // создаём вложенность, но в обратном порядке для упрощения
+                $temp_url = array_reverse($temp_url);
+
+                $temp_arr = array(); // храним временный результат между циклами
+                
+                // обход путя с конца
+                foreach ($temp_url as $path_part_index => $path_part){
+                    if ($path_part_index === 0){
+                        $temp_arr[$path_part] = array('title' => $title, 'url' => $url, 'childs' => array());
+                    } else {
+                        $above_temp_arr = array('childs' => array()); // создаём заготовку
+                        $above_temp_arr['childs'] = $temp_arr; // помещаем туда данные с предыдущей итерации
+                        $temp_arr = array();
+                        $temp_arr[$path_part] = $above_temp_arr; // перемещаем во временный
+                    }
+                }
+
+                // собрали вложенный массив, помещаем его в общий
+                $render_array = array_replace_recursive($render_array, $temp_arr);
+            }
+        }
+
+        return $render_array;
+    } else {
+        return array();
+    }
+}
+
+/**
+ * Получили массив ['url' => title, url, childs => [...], 'url' => ... ], строим из него html
+ */
+function htmlsitemap_build_html_from_array($render_array){
+    $result = '<ul class="htmlsitemap">';
+
+    if ($render_array){
+        $result .= htmlsitemap_recursive_html_builder_helper($render_array);
+    }
+
+    $result .= '</ul>';
+
+    return $result;
+}
+
+/**
+ * Вспомогательная рекурсивная функция, рендерит дочерние
+ */
+function htmlsitemap_recursive_html_builder_helper($elems){
+    $temp = '';
+
+    foreach ($elems as $key => $data) {
+        $temp .= '<li>';
+        $temp .= '<a href="'.$data['url'].'">'.$data['title'].'</a>';
+
+        // проверка на вложенный
+        if ($data['childs']){
+            $temp .= '<ul>';
+            $temp .= htmlsitemap_recursive_html_builder_helper($data['childs']); // здесь рекурсивный вызов
+            $temp .= '</ul>';
+        }
+        $temp .= '</li>';
+    }
+
+    return $temp;
+}
