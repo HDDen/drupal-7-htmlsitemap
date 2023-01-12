@@ -139,9 +139,10 @@
 
 /* upd, parents order */
 .htmlsitemap > ul > li{
-	order: 1;
+	order: 10;
 }
-.htmlsitemap > ul > .has-childs{
+.htmlsitemap > ul > .has-childs,
+.htmlsitemap > ul > .visually-has-childs{
 	order: 0;
 }
 /**/
@@ -152,11 +153,24 @@
 .htmlsitemap > ul > li::before{
 	display: none;
 }
+.htmlsitemap > ul > li:not(.has-childs):not(.visually-has-childs){
+	margin-top: 0;
+}
+.htmlsitemap > ul > li:not(.has-childs):not(.visually-has-childs) a{
+	font-weight: unset;
+	width: auto;
+	margin-bottom: 5px;
+}
+/**/
 
 @media (max-width: 767px) {
     .htmlsitemap ul ul {
         columns:1;
     }
+
+	.htmlsitemap > ul > li:not(.has-childs):not(.visually-has-childs) a{
+		font-size: 18px;
+	}
 }
 
 @media (max-width: 520px) {
@@ -167,15 +181,19 @@
     .htmlsitemap > ul > li > a {
         margin-bottom: 7px;
     }
+
+	.htmlsitemap > ul > li:not(.has-childs):not(.visually-has-childs) a{
+		font-size: unset;
+	}
 }
 
 @media (max-width: 767px) {
-    .htmlsitemap > ul > li {
+    .htmlsitemap > ul > li.has-childs:not(.active) {
         max-height:150px;
         overflow: hidden;
     }
 
-    .htmlsitemap > ul > li::before {
+    .htmlsitemap > ul > li.has-childs::before {
         content: '';
         display: block;
         width: 100%;
@@ -186,10 +204,10 @@
         background: linear-gradient(to top,#fff,transparent);
         z-index: 1;
         cursor: pointer;
-        border-radius: 0;
+		border-radius: 0;
     }
 
-    .htmlsitemap > ul > li::after {
+    .htmlsitemap > ul > li.has-childs::after {
         content: '\0420 \0430 \0437 \0432 \0435 \0440 \043D \0443 \0442 \044C ';
         display: block;
         position: absolute;
@@ -204,24 +222,24 @@
         color: #49b68b;
     }
 
-    .htmlsitemap > ul > li a {
+    .htmlsitemap > ul > li.has-childs a {
         pointer-events: none;
     }
 
-    .htmlsitemap > ul > li.active a {
+    .htmlsitemap > ul > li.has-childs.active a {
         pointer-events: all;
     }
 
-    .htmlsitemap .active {
+    .htmlsitemap .has-childs.active {
         max-height: unset;
         padding-bottom: 30px;
     }
 
-    .htmlsitemap .active::before {
+    .htmlsitemap .has-childs.active::before {
         display: none;
     }
 
-    .htmlsitemap .active::after {
+    .htmlsitemap .has-childs.active::after {
         content: '\0421 \0432 \0435 \0440 \043D \0443 \0442 \044C ';
     }
 }

@@ -87,7 +87,17 @@ function htmlsitemap_get_markup(){
         ksort($all_elements);
 
         // есть массив ссылок, теперь надо отрендерить
-        $result = htmlsitemap_render_html($all_elements);
+        // поддержка блеклиста
+        // поддержка класса для визуализации как родителя, без дочерних по факту
+        $result = htmlsitemap_render_html($all_elements, array(
+            'https://site.ru/sitemap',
+            'https://site.ru/403',
+            'https://site.ru/404',
+            'https://site.ru/front'
+        ), 
+        array(
+            'https://site.ru/lechenie-igromanii',
+        ));
 
         // поместим в кэш
         cache_set('htmlsitemap_'.$domain, $result, 'cache', CACHE_TEMPORARY);
@@ -198,14 +208,14 @@ function htmlsitemap_get_views($views_blacklist = array(), $views_whitelist = ar
 /**
  * Получим список ссылок, возвращаем итоговую разметку
  */
-function htmlsitemap_render_html($elements, $blacklist = array()){
+function htmlsitemap_render_html($elements, $blacklist = array(), $visually_mark_as_parent = array()){
     $result = '';
 
     // из списка ссылок получаем рендерируемый массив
     $renderable_array = htmlsitemap_get_renderable_array($elements, $blacklist);
 
     // Вторая часть. Из полученного массива рендерим разметку.
-    $result = htmlsitemap_build_html_from_array($renderable_array);
+    $result = htmlsitemap_build_html_from_array($renderable_array, $visually_mark_as_parent);
 
     return $result;
 }
@@ -264,11 +274,11 @@ function htmlsitemap_get_renderable_array($elements, $blacklist = array()){
 /**
  * Получили массив ['url' => title, url, childs => [...], 'url' => ... ], строим из него html
  */
-function htmlsitemap_build_html_from_array($render_array){
+function htmlsitemap_build_html_from_array($render_array, &$visually_mark_as_parent = array()){
     $result = '<div class="htmlsitemap"><ul>';
 
     if ($render_array){
-        $result .= htmlsitemap_recursive_html_builder_helper($render_array);
+        $result .= htmlsitemap_recursive_html_builder_helper($render_array, $visually_mark_as_parent);
     }
 
     $result .= '</ul></div>';
@@ -279,22 +289,27 @@ function htmlsitemap_build_html_from_array($render_array){
 /**
  * Вспомогательная рекурсивная функция, рендерит дочерние
  */
-function htmlsitemap_recursive_html_builder_helper($elems){
+function htmlsitemap_recursive_html_builder_helper($elems, &$visually_mark_as_parent = array()){
     $temp = '';
 
     foreach ($elems as $key => $data) {
 
+        // проверка на доп. класс для li
+        $li_class = '';
+        if ($data['childs']){
+            $li_class = 'has-childs';
+        } elseif (in_array($data['url'], $visually_mark_as_parent)){
+            $li_class = 'visually-has-childs';
+        }
+
+        $temp .= '<li'.($li_class ? ' class="'.$li_class.'"' : '').' data-url="'.$data['url'].'">';
+        $temp .= '<a href="'.$data['url'].'">'.$data['title'].'</a>';
+
         // проверка на вложенный
         if ($data['childs']){
-            $temp .= '<li class="has-childs" data-url="'.$data['url'].'">';
-            $temp .= '<a href="'.$data['url'].'">'.$data['title'].'</a>';
-
             $temp .= '<ul>';
             $temp .= htmlsitemap_recursive_html_builder_helper($data['childs']); // здесь рекурсивный вызов
             $temp .= '</ul>';
-        } else {
-            $temp .= '<li data-url="'.$data['url'].'">';
-            $temp .= '<a href="'.$data['url'].'">'.$data['title'].'</a>';
         }
         $temp .= '</li>';
     }
