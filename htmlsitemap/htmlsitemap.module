@@ -265,13 +265,13 @@ function htmlsitemap_get_renderable_array($elements, $blacklist = array()){
  * Получили массив ['url' => title, url, childs => [...], 'url' => ... ], строим из него html
  */
 function htmlsitemap_build_html_from_array($render_array){
-    $result = '<ul class="htmlsitemap">';
+    $result = '<div class="htmlsitemap"><ul>';
 
     if ($render_array){
         $result .= htmlsitemap_recursive_html_builder_helper($render_array);
     }
 
-    $result .= '</ul>';
+    $result .= '</ul></div>';
 
     return $result;
 }
@@ -283,14 +283,18 @@ function htmlsitemap_recursive_html_builder_helper($elems){
     $temp = '';
 
     foreach ($elems as $key => $data) {
-        $temp .= '<li>';
-        $temp .= '<a href="'.$data['url'].'">'.$data['title'].'</a>';
 
         // проверка на вложенный
         if ($data['childs']){
+            $temp .= '<li class="has-childs">';
+            $temp .= '<a href="'.$data['url'].'">'.$data['title'].'</a>';
+
             $temp .= '<ul>';
             $temp .= htmlsitemap_recursive_html_builder_helper($data['childs']); // здесь рекурсивный вызов
             $temp .= '</ul>';
+        } else {
+            $temp .= '<li>';
+            $temp .= '<a href="'.$data['url'].'">'.$data['title'].'</a>';
         }
         $temp .= '</li>';
     }
