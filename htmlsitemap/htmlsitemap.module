@@ -151,10 +151,11 @@ function htmlsitemap_get_terms($vocab_blacklist){
                 foreach ($terms as $term_id => $term_props) {
                     
                     // провверяем наличие статуса
-                    if (isset($term_props->status) && $term_props->status){
-                        $url = url('taxonomy/term/' . $term_id, array('absolute' => TRUE) );
-                        $elements[$url] = $term_props->name;
+                    if (isset($term_props->status) && !$term_props->status){
+                        continue;
                     }
+                    $url = url('taxonomy/term/' . $term_id, array('absolute' => TRUE) );
+                    $elements[$url] = $term_props->name;
                 }
             }
         }
