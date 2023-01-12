@@ -286,14 +286,14 @@ function htmlsitemap_recursive_html_builder_helper($elems){
 
         // проверка на вложенный
         if ($data['childs']){
-            $temp .= '<li class="has-childs">';
+            $temp .= '<li class="has-childs" data-url="'.$data['url'].'">';
             $temp .= '<a href="'.$data['url'].'">'.$data['title'].'</a>';
 
             $temp .= '<ul>';
             $temp .= htmlsitemap_recursive_html_builder_helper($data['childs']); // здесь рекурсивный вызов
             $temp .= '</ul>';
         } else {
-            $temp .= '<li>';
+            $temp .= '<li data-url="'.$data['url'].'">';
             $temp .= '<a href="'.$data['url'].'">'.$data['title'].'</a>';
         }
         $temp .= '</li>';
