@@ -146,11 +146,11 @@
 
 /* upd, parents order */
 .htmlsitemap > ul > li{
-	order: 10;
+	order: 100;
 }
 .htmlsitemap > ul > .has-childs,
 .htmlsitemap > ul > .visually-has-childs{
-	order: 0;
+	order: 10;
 }
 /* upd, empty parts */
 .htmlsitemap .htmlsitemap__empty-elem{
