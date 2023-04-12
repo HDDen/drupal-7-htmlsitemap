@@ -97,6 +97,9 @@ function htmlsitemap_get_markup(){
         ), 
         array(
             //'https://'.$_SERVER['HTTP_HOST'].'/lechenie-igromanii',
+        ),
+        array( // блеклист с частичным адресом
+            //'/dostup-zapreshchen',
         ));
 
         // поместим в кэш
@@ -208,11 +211,11 @@ function htmlsitemap_get_views($views_blacklist = array(), $views_whitelist = ar
 /**
  * Получим список ссылок, возвращаем итоговую разметку
  */
-function htmlsitemap_render_html($elements, $blacklist = array(), $visually_mark_as_parent = array()){
+function htmlsitemap_render_html($elements, $blacklist = array(), $visually_mark_as_parent = array(), $blacklist_strpos = array()){
     $result = '';
 
     // из списка ссылок получаем рендерируемый массив
-    $renderable_array = htmlsitemap_get_renderable_array($elements, $blacklist);
+    $renderable_array = htmlsitemap_get_renderable_array($elements, $blacklist, $blacklist_strpos);
 
     // Вторая часть. Из полученного массива рендерим разметку.
     $result = htmlsitemap_build_html_from_array($renderable_array, $visually_mark_as_parent);
@@ -223,7 +226,7 @@ function htmlsitemap_render_html($elements, $blacklist = array(), $visually_mark
 /**
  * Получаем список ссылок, раскладываем его на массив ['url' => title, url, childs => [...], 'url' => ... ]
  */
-function htmlsitemap_get_renderable_array($elements, $blacklist = array()){
+function htmlsitemap_get_renderable_array($elements, $blacklist = array(), $blacklist_strpos = array()){
     
     if ($elements){
         // есть массив формата 'https://site.com/test' => 'Тестовая'
@@ -233,6 +236,15 @@ function htmlsitemap_get_renderable_array($elements, $blacklist = array()){
         foreach ($elements as $url => $title) {
             // проверка на блеклист
             if ($blacklist && in_array($url, $blacklist)) continue;
+
+            // доп блеклист
+            if ($blacklist_strpos){
+                foreach ($blacklist_strpos as $blacklist_strpos__item) {
+                    if (strpos($url, $blacklist_strpos__item) !== false){
+                        continue 2;
+                    }
+                }
+            }
 
             // удаляем домен
             $domain = strtok($_SERVER['HTTP_HOST'], ':');
