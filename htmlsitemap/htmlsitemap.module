@@ -96,10 +96,10 @@ function htmlsitemap_get_markup(){
             // 'https://'.$_SERVER['HTTP_HOST'].'/front'
         ), 
         array(
-            //'https://'.$_SERVER['HTTP_HOST'].'/lechenie-igromanii',
+            // 'https://'.$_SERVER['HTTP_HOST'].'/lechenie-igromanii',
         ),
         array( // блеклист с частичным адресом
-            //'/dostup-zapreshchen',
+            // '/hidden/',
         ));
 
         // поместим в кэш
@@ -314,8 +314,13 @@ function htmlsitemap_recursive_html_builder_helper($elems, &$visually_mark_as_pa
             $li_class = 'visually-has-childs';
         }
 
-        $temp .= '<li'.($li_class ? ' class="'.$li_class.'"' : '').' data-url="'.$data['url'].'">';
-        $temp .= '<a href="'.$data['url'].'">'.$data['title'].'</a>';
+        if (isset($data['url']) && $data['url']){
+            $temp .= '<li'.($li_class ? ' class="'.$li_class.'"' : '').' data-url="'.$data['url'].'">';
+            $temp .= '<a href="'.$data['url'].'">'.$data['title'].'</a>';
+        } else {
+            $temp .= '<li'.($li_class ? ' class="'.$li_class.'"' : '').' data-url="'.$key.'">';
+            $temp .= '<span class="htmlsitemap__empty-elem"></span>';
+        }
 
         // проверка на вложенный
         if ($data['childs']){
