@@ -90,13 +90,13 @@ function htmlsitemap_get_markup(){
         // поддержка блеклиста
         // поддержка класса для визуализации как родителя, без дочерних по факту
         $result = htmlsitemap_render_html($all_elements, array(
-            'https://site.ru/sitemap',
-            'https://site.ru/403',
-            'https://site.ru/404',
-            'https://site.ru/front'
+            // 'https://'.$_SERVER['HTTP_HOST'].'/sitemap',
+            // 'https://'.$_SERVER['HTTP_HOST'].'/403',
+            // 'https://'.$_SERVER['HTTP_HOST'].'/404',
+            // 'https://'.$_SERVER['HTTP_HOST'].'/front'
         ), 
         array(
-            'https://site.ru/lechenie-igromanii',
+            //'https://'.$_SERVER['HTTP_HOST'].'/lechenie-igromanii',
         ));
 
         // поместим в кэш
