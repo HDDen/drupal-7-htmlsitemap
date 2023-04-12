@@ -160,7 +160,7 @@
 	/*background: tomato!important;*/
 }
 .htmlsitemap .htmlsitemap__empty-elem::before{
-	content: '������';
+	content: '\0420 \0430 \0437 \0434 \0435 \043B ';
 }
 /**/
 /* addon */
