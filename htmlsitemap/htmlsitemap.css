@@ -238,7 +238,7 @@
         cursor: pointer;
         font-size: 13px;
         font-weight: 600;
-        color: #49b68b;
+        /*color: #49b68b;*/
     }
 
     .htmlsitemap > ul > li.has-childs a {
