@@ -150,7 +150,7 @@
 }
 .htmlsitemap > ul > .has-childs,
 .htmlsitemap > ul > .visually-has-childs{
-	order: 10;
+	order: 50;
 }
 /* upd, empty parts */
 .htmlsitemap .htmlsitemap__empty-elem{
