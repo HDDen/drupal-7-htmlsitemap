@@ -53,20 +53,23 @@
     height: 100%;
 }
 
-.htmlsitemap a {
+.htmlsitemap a,
+.htmlsitemap .htmlsitemap__empty-elem {
     display: inline-block;
     font-size: 18px;
     line-height: 1.25em;
     padding: 3px 0;
 }
 
-.htmlsitemap a:hover {
+.htmlsitemap a:hover,
+.htmlsitemap .htmlsitemap__empty-elem:hover {
     /*color: #31c797;*/
     /*font-weight: 900;*/
     transition: none!important;
 }
 
-.htmlsitemap > ul > li > a {
+.htmlsitemap > ul > li > a,
+.htmlsitemap > ul > li > .htmlsitemap__empty-elem {
     font-weight: 700;
     font-size: 20px;
 }
@@ -84,7 +87,8 @@
         margin-left: 10px;
     }
 
-    .htmlsitemap > ul > li > a::after {
+    .htmlsitemap > ul > li > a::after,
+    .htmlsitemap > ul > li > .htmlsitemap__empty-elem::after {
         display: none;
     }
 
@@ -96,7 +100,8 @@
         font-size: 14px;
     }
 
-    .htmlsitemap > ul > li > a {
+    .htmlsitemap > ul > li > a,
+    .htmlsitemap > ul > li > .htmlsitemap__empty-elem {
         font-size: 16px;
     }
 }
@@ -105,7 +110,8 @@
     max-width: unset;
 }
 
-.htmlsitemap > ul > li > a {
+.htmlsitemap > ul > li > a,
+.htmlsitemap > ul > li > .htmlsitemap__empty-elem {
     width: 100%;
     /*border-bottom: 3px solid #005fad!important;*/
     position: relative;
@@ -114,7 +120,8 @@
     margin-bottom: 10px;
 }
 
-.htmlsitemap > ul > li > a::after {
+.htmlsitemap > ul > li > a::after,
+.htmlsitemap > ul > li > .htmlsitemap__empty-elem::after {
     content: '';
     display: block;
     position: absolute;
@@ -145,6 +152,16 @@
 .htmlsitemap > ul > .visually-has-childs{
 	order: 0;
 }
+/* upd, empty parts */
+.htmlsitemap .htmlsitemap__empty-elem{
+	display: block;
+	width: 100%;
+	min-height: 1em;
+	/*background: tomato!important;*/
+}
+.htmlsitemap .htmlsitemap__empty-elem::before{
+	content: '������';
+}
 /**/
 /* addon */
 .htmlsitemap > ul > li{
@@ -174,11 +191,13 @@
 }
 
 @media (max-width: 520px) {
-    .htmlsitemap > ul > li > a::after {
+    .htmlsitemap > ul > li > a::after,
+    .htmlsitemap > ul > li > .htmlsitemap__empty-elem::after {
         display:none;
     }
 
-    .htmlsitemap > ul > li > a {
+    .htmlsitemap > ul > li > a,
+    .htmlsitemap > ul > li > .htmlsitemap__empty-elem {
         margin-bottom: 7px;
     }
 
